@@ -15,11 +15,11 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-CSRF_TRUSTED_ORIGINS= ["https://web-production-10be.up.railway.app"]
+CSRF_TRUSTED_ORIGINS= ["https://web-production-9a574.up.railway.app"]
 
 # Railway domain URL for absolute URLs
-RAILWAY_DOMAIN_URL = "web-production-10be.up.railway.app"
-BASE_URL = "https://web-production-10be.up.railway.app"
+RAILWAY_DOMAIN_URL = "web-production-9a574.up.railway.app"
+BASE_URL = "https://web-production-9a574.up.railway.app"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -30,7 +30,7 @@ SECRET_KEY = 'your-secret-key'  # Change this in production
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*", "web-production-10be.up.railway.app"]
+ALLOWED_HOSTS = ["*", "web-production-9a574.up.railway.app"]
 
 # For Railway deployment specific settings
 USE_X_FORWARDED_HOST = True
