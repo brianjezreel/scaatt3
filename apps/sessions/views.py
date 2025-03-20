@@ -2,9 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponseForbidden, JsonResponse
+from django.urls import reverse
 from django.utils import timezone
-from .models import Session
-from .forms import SessionForm, QRCodeRefreshForm
+from django.db.models import Q
+from datetime import timedelta, datetime, date
+from .models import Session, CourseSchedule
+from .forms import SessionForm, QRCodeRefreshForm, CourseScheduleForm
 from apps.courses.models import Course
 from utils.qr_generator import generate_qr_code_url, generate_qr_code_image
 
@@ -329,3 +332,143 @@ def all_sessions(request):
     }
     
     return render(request, 'sessions/all_sessions.html', context)
+
+
+@login_required
+def course_schedule(request, course_id):
+    """Manage course schedules"""
+    course = get_object_or_404(Course, id=course_id)
+    
+    # Verify the user is the teacher of the course
+    if request.user != course.teacher:
+        messages.error(request, 'Only the teacher of the course can manage schedules.')
+        return redirect('course_detail', course_id=course.id)
+    
+    current_schedules = CourseSchedule.objects.filter(course=course, is_active=True)
+    
+    if request.method == 'POST':
+        form = CourseScheduleForm(request.POST, course=course)
+        if form.is_valid():
+            schedules = form.save()
+            if schedules:
+                messages.success(request, 'Course schedule has been updated.')
+                generate_upcoming_sessions(course)
+            return redirect('course_schedule', course_id=course.id)
+    else:
+        form = CourseScheduleForm(course=course)
+    
+    return render(request, 'sessions/schedule_form.html', {
+        'form': form,
+        'course': course,
+        'current_schedules': current_schedules,
+    })
+
+
+@login_required
+def delete_schedule(request, course_id, schedule_id):
+    """Delete a course schedule"""
+    course = get_object_or_404(Course, id=course_id)
+    schedule = get_object_or_404(CourseSchedule, id=schedule_id, course=course)
+    
+    # Verify the user is the teacher of the course
+    if request.user != course.teacher:
+        messages.error(request, 'Only the teacher of the course can delete schedules.')
+        return redirect('course_detail', course_id=course.id)
+    
+    schedule.is_active = False
+    schedule.save()
+    
+    messages.success(request, f'Schedule for {schedule.get_day_of_week_display()} has been deleted.')
+    return redirect('course_schedule', course_id=course.id)
+
+
+def generate_upcoming_sessions(course, weeks_ahead=4):
+    """Generate sessions for the upcoming weeks based on course schedules"""
+    
+    today = timezone.now().date()
+    end_date = today + timedelta(days=weeks_ahead * 7)
+    
+    # Get all active schedules for the course
+    schedules = CourseSchedule.objects.filter(course=course, is_active=True)
+    
+    # If no schedules, return
+    if not schedules:
+        return []
+    
+    created_sessions = []
+    
+    # For each schedule, generate sessions up to weeks_ahead
+    for schedule in schedules:
+        # Calculate the next occurrence of this schedule's day of the week
+        days_ahead = (schedule.day_of_week - today.weekday()) % 7
+        if days_ahead == 0 and timezone.now().time() > schedule.end_time:
+            # If today is the day but the session time has passed, start from next week
+            days_ahead = 7
+        
+        next_date = today + timedelta(days=days_ahead)
+        
+        # Generate sessions for the specified number of weeks
+        while next_date <= end_date:
+            # Check if a session already exists for this date and time range
+            existing_session = Session.objects.filter(
+                course=course,
+                date=next_date,
+                start_time=schedule.start_time,
+                end_time=schedule.end_time
+            ).exists()
+            
+            if not existing_session:
+                # Create a new session
+                title = f"{course.name} - {schedule.get_day_of_week_display()}"
+                session = Session.objects.create(
+                    course=course,
+                    schedule=schedule,
+                    title=title,
+                    date=next_date,
+                    start_time=schedule.start_time,
+                    end_time=schedule.end_time
+                )
+                created_sessions.append(session)
+            
+            # Move to the next week
+            next_date += timedelta(days=7)
+    
+    return created_sessions
+
+
+@login_required
+def generate_qr_redirect(request):
+    """
+    Redirect teacher to an active session for QR code generation
+    If multiple active sessions, show a selection screen
+    """
+    if not request.user.is_teacher:
+        messages.error(request, 'Only teachers can generate QR codes for attendance.')
+        return redirect('dashboard')
+    
+    # Get all courses taught by the teacher
+    courses = Course.objects.filter(teacher=request.user)
+    
+    # Get all currently active sessions for these courses
+    now = timezone.now()
+    active_sessions = []
+    
+    for course in courses:
+        # Find sessions that should be active (15 min before start to end time)
+        for session in Session.objects.filter(course=course, is_closed=False):
+            if session.is_active:
+                active_sessions.append(session)
+    
+    if not active_sessions:
+        messages.info(request, 'You have no active sessions at this time.')
+        return redirect('course_list')
+    
+    if len(active_sessions) == 1:
+        # If only one active session, redirect directly to it
+        session = active_sessions[0]
+        return redirect('session_detail', course_id=session.course.id, session_id=session.id)
+    else:
+        # If multiple active sessions, show a selection page
+        return render(request, 'sessions/active_sessions.html', {
+            'sessions': active_sessions
+        })

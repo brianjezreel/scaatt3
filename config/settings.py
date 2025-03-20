@@ -46,6 +46,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
+    # Third-party apps
+    # 'django_crontab',  # Uncomment and install django-crontab for production use
+    
     # Custom apps
     'apps.accounts',
     'apps.courses',
@@ -154,3 +157,9 @@ LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Cron jobs configuration - uncomment for production use
+# CRONJOBS = [
+#     # Run every hour to auto-close expired sessions and generate upcoming sessions
+#     ('0 * * * *', 'django.core.management.call_command', ['auto_manage_sessions'], {}, '>> /tmp/auto_manage_sessions.log 2>&1')
+# ]

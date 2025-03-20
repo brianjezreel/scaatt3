@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Course Schedule - QR Attendance{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'course_list' %}">My Courses</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'course_detail' course.id %}">{{ course.name }}</a></li>
+                <li class="breadcrumb-item active">Course Schedule</li>
+            </ol>
+        </nav>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Set Course Schedule</h4>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">
+                    Set up the regular meeting schedule for this course. Sessions will be automatically created based on this schedule.
+                </p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label">Days of the Week</label>
+                            <div class="d-flex flex-wrap">
+                                <div class="form-check me-4 mb-2">
+                                    {{ form.monday }}
+                                    <label class="form-check-label" for="{{ form.monday.id_for_label }}">Monday</label>
+                                </div>
+                                <div class="form-check me-4 mb-2">
+                                    {{ form.tuesday }}
+                                    <label class="form-check-label" for="{{ form.tuesday.id_for_label }}">Tuesday</label>
+                                </div>
+                                <div class="form-check me-4 mb-2">
+                                    {{ form.wednesday }}
+                                    <label class="form-check-label" for="{{ form.wednesday.id_for_label }}">Wednesday</label>
+                                </div>
+                                <div class="form-check me-4 mb-2">
+                                    {{ form.thursday }}
+                                    <label class="form-check-label" for="{{ form.thursday.id_for_label }}">Thursday</label>
+                                </div>
+                                <div class="form-check me-4 mb-2">
+                                    {{ form.friday }}
+                                    <label class="form-check-label" for="{{ form.friday.id_for_label }}">Friday</label>
+                                </div>
+                                <div class="form-check me-4 mb-2">
+                                    {{ form.saturday }}
+                                    <label class="form-check-label" for="{{ form.saturday.id_for_label }}">Saturday</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.start_time.id_for_label }}" class="form-label">Start Time</label>
+                            {{ form.start_time.errors }}
+                            {{ form.start_time }}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.end_time.id_for_label }}" class="form-label">End Time</label>
+                            {{ form.end_time.errors }}
+                            {{ form.end_time }}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'course_detail' course.id %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save Schedule</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        {% if current_schedules %}
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h4 class="mb-0">Current Schedules</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Day</th>
+                                <th>Start Time</th>
+                                <th>End Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for schedule in current_schedules %}
+                            <tr>
+                                <td>{{ schedule.get_day_of_week_display }}</td>
+                                <td>{{ schedule.start_time|time:"g:i A" }}</td>
+                                <td>{{ schedule.end_time|time:"g:i A" }}</td>
+                                <td>
+                                    <a href="{% url 'delete_schedule' course.id schedule.id %}" class="btn btn-sm btn-outline-danger">
+                                        Delete
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

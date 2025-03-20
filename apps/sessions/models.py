@@ -1,8 +1,47 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
 from apps.courses.models import Course
 from utils.qr_generator import generate_session_token, calculate_expiry_time
+
+
+class CourseSchedule(models.Model):
+    """Model for defining recurring course schedules"""
+    
+    DAYS_OF_WEEK = [
+        (0, _('Monday')),
+        (1, _('Tuesday')),
+        (2, _('Wednesday')),
+        (3, _('Thursday')),
+        (4, _('Friday')),
+        (5, _('Saturday')),
+    ]
+    
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='schedules'
+    )
+    day_of_week = models.IntegerField(choices=DAYS_OF_WEEK)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['day_of_week', 'start_time']
+        unique_together = ['course', 'day_of_week', 'start_time']
+    
+    def __str__(self):
+        return f"{self.course.name} - {self.get_day_of_week_display()} {self.start_time.strftime('%I:%M %p')}"
+    
+    def clean(self):
+        # Check that end time is after start time
+        if self.start_time and self.end_time and self.start_time >= self.end_time:
+            raise ValidationError({"end_time": _("End time must be after start time.")})
 
 
 class Session(models.Model):
@@ -12,6 +51,13 @@ class Session(models.Model):
         Course,
         on_delete=models.CASCADE,
         related_name='sessions'
+    )
+    schedule = models.ForeignKey(
+        CourseSchedule,
+        on_delete=models.SET_NULL,
+        related_name='sessions',
+        null=True,
+        blank=True
     )
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True)
@@ -48,13 +94,18 @@ class Session(models.Model):
             return False
             
         now = timezone.now()
+        
+        # Session starts 15 minutes before scheduled start time
         session_date = timezone.make_aware(
             timezone.datetime.combine(self.date, self.start_time)
         )
+        early_start = session_date - timezone.timedelta(minutes=15)
+        
         session_end = timezone.make_aware(
             timezone.datetime.combine(self.date, self.end_time)
         )
-        return session_date <= now <= session_end
+        
+        return early_start <= now <= session_end
     
     @property
     def is_upcoming(self):
@@ -63,7 +114,8 @@ class Session(models.Model):
         session_date = timezone.make_aware(
             timezone.datetime.combine(self.date, self.start_time)
         )
-        return now < session_date
+        early_start = session_date - timezone.timedelta(minutes=15)
+        return now < early_start
     
     @property
     def is_past(self):

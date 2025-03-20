@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Active Sessions - QR Attendance{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Active Sessions</h4>
+            </div>
+            <div class="card-body">
+                <p class="lead mb-4">You have multiple active sessions. Please select a session to generate a QR code for attendance.</p>
+                
+                <div class="list-group">
+                    {% for session in sessions %}
+                    <a href="{% url 'session_detail' session.course.id session.id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ session.title }}</h5>
+                            <small>{{ session.date|date:"M d, Y" }}</small>
+                        </div>
+                        <p class="mb-1">{{ session.course.name }}</p>
+                        <small>{{ session.start_time|time:"g:i A" }} - {{ session.end_time|time:"g:i A" }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

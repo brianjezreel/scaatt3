@@ -40,7 +40,7 @@ def mark_attendance(request, session_id, token):
     
     # Check if the student is enrolled in the course
     if not session.course.enrollments.filter(student=request.user, is_active=True).exists():
-        messages.error(request, 'You are not enrolled in this course.')
+        messages.error(request, 'You are not enrolled in this course. Attendance cannot be recorded.')
         return redirect('course_list')
     
     # Check if the student has already marked attendance for this session
@@ -374,7 +374,7 @@ def manual_attendance(request):
         
         # Check if the student is enrolled in the course
         if not session.course.enrollments.filter(student=request.user, is_active=True).exists():
-            messages.error(request, 'You are not enrolled in this course.')
+            messages.error(request, 'You are not enrolled in this course. Attendance cannot be recorded.')
             return redirect('course_list')
         
         # Check if the student has already marked attendance for this session

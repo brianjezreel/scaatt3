@@ -114,6 +114,9 @@
                 <div class="d-flex justify-content-between align-items-center mt-4">
                     <h5>Sessions</h5>
                     <div>
+                        <a href="{% url 'course_schedule' course.id %}" class="btn btn-info">
+                            <i class="bi bi-calendar-check"></i> Manage Schedule
+                        </a>
                         <a href="{% url 'session_list' course.id %}" class="btn btn-primary">
                             <i class="bi bi-list"></i> View Sessions
                         </a>

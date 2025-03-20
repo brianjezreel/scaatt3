@@ -11,7 +11,12 @@
                 {% if user.is_authenticated %}
                     <h1>Good day, {{ user.first_name }}!</h1>
                     {% if user.is_teacher %}
-                        <a href="{% url 'course_list' %}" class="btn btn-primary">MY COURSES</a>
+                        <div class="d-flex flex-column align-items-center gap-3">
+                            <a href="{% url 'course_list' %}" class="btn btn-primary btn-lg">MY COURSES</a>
+                            <a href="{% url 'generate_qr_redirect' %}" class="btn btn-success btn-lg">
+                                <i class="bi bi-qr-code"></i> GENERATE QR FOR ACTIVE SESSION
+                            </a>
+                        </div>
                     {% elif user.is_student %}
                         <a href="{% url 'course_list' %}" class="btn btn-primary">MY COURSES</a>
                     {% endif %}
