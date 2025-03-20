@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}My Courses - QR Attendance{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>My Courses</h1>
+            <a href="{% url 'create_course' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Create New Course
+            </a>
+        </div>
+        
+        {% if courses %}
+            <div class="row">
+                {% for course in courses %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">{{ course.name }}</h5>
+                                {% if course.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text"><strong>Code:</strong> {{ course.code }}</p>
+                                <p class="card-text"><strong>Students:</strong> {{ course.student_count }}</p>
+                                {% if course.description %}
+                                    <p class="card-text">{{ course.description|truncatechars:100 }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer">
+                                <a href="{% url 'course_detail' course.id %}" class="btn btn-primary btn-sm">View Details</a>
+                                <a href="{% url 'edit_course' course.id %}" class="btn btn-outline-primary btn-sm">Edit</a>
+                                <a href="{% url 'delete_course' course.id %}" class="btn btn-outline-danger btn-sm">Delete</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <p>You haven't created any courses yet.</p>
+                <a href="{% url 'create_course' %}" class="btn btn-primary">Create Your First Course</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

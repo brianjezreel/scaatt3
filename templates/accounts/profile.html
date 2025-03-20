@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - QR Attendance{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">My Profile</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center mb-4">
+                        {% if user.profile.profile_picture %}
+                            <img src="{{ user.profile.profile_picture.url }}" alt="Profile Picture" class="img-fluid rounded-circle mb-3" style="max-width: 150px;">
+                        {% else %}
+                            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 150px; height: 150px;">
+                                <span class="display-4">{{ user.first_name.0 }}{{ user.last_name.0 }}</span>
+                            </div>
+                        {% endif %}
+                        <p><strong>{{ user.get_full_name }}</strong></p>
+                        <p><span class="badge {% if user.is_teacher %}bg-primary{% else %}bg-success{% endif %}">{{ user.get_role_display }}</span></p>
+                    </div>
+                    <div class="col-md-8">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            
+                            <h5>User Information</h5>
+                            {% for field in user_form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                {{ field.errors }}
+                                {{ field }}
+                            </div>
+                            {% endfor %}
+                            
+                            <h5 class="mt-4">Profile Information</h5>
+                            {% for field in profile_form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                {{ field.errors }}
+                                {{ field }}
+                            </div>
+                            {% endfor %}
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Update Profile</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

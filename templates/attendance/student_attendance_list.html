@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}My Attendance - {{ course.name }} - QR Attendance{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'course_list' %}">My Courses</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'course_detail' course.id %}">{{ course.name }}</a></li>
+                <li class="breadcrumb-item active">My Attendance</li>
+            </ol>
+        </nav>
+        
+        <h1 class="mb-4">My Attendance for {{ course.name }}</h1>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Filter Attendance Records</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="{{ filter_form.date_from.id_for_label }}" class="form-label">From Date</label>
+                        {{ filter_form.date_from }}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ filter_form.date_to.id_for_label }}" class="form-label">To Date</label>
+                        {{ filter_form.date_to }}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ filter_form.status.id_for_label }}" class="form-label">Status</label>
+                        {{ filter_form.status }}
+                    </div>
+                    <div class="col-12 mt-3">
+                        <button type="submit" class="btn btn-success">Apply Filters</button>
+                        <a href="{% url 'attendance_list' course.id %}" class="btn btn-outline-secondary">Clear Filters</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        {% if attendances %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Session</th>
+                            <th>Date</th>
+                            <th>Check-in Time</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attendance in attendances %}
+                            <tr>
+                                <td>{{ attendance.session.title }}</td>
+                                <td>{{ attendance.session.date|date:"F j, Y" }}</td>
+                                <td>{{ attendance.check_in_time|time:"g:i A" }}</td>
+                                <td>
+                                    {% if attendance.status == 'PRESENT' %}
+                                        <span class="badge bg-success">Present</span>
+                                    {% elif attendance.status == 'LATE' %}
+                                        <span class="badge bg-warning text-dark">Late</span>
+                                    {% elif attendance.status == 'EXCUSED' %}
+                                        <span class="badge bg-info">Excused</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Absent</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'session_detail' course.id attendance.session.id %}" class="btn btn-sm btn-outline-success">View Session</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <p>No attendance records found matching your criteria.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

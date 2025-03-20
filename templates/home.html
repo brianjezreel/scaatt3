@@ -1,0 +1,26 @@
+<!-- templates/home.html -->
+{% extends 'base.html' %}
+
+{% block title %}Home - SCA'ATT{% endblock %}
+
+{% block content %}
+<div class="welcome-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10 text-center">
+                {% if user.is_authenticated %}
+                    <h1>Good day, {{ user.first_name }}!</h1>
+                    {% if user.is_teacher %}
+                        <a href="{% url 'course_list' %}" class="btn btn-primary">MY COURSES</a>
+                    {% elif user.is_student %}
+                        <a href="{% url 'course_list' %}" class="btn btn-primary">MY COURSES</a>
+                    {% endif %}
+                {% else %}
+                    <h1>WELCOME</h1>
+                    <a href="{% url 'login' %}" class="btn btn-primary">GET STARTED</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

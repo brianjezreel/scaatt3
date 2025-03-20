@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Sessions - {{ course.name }} - QR Attendance{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'course_list' %}">My Courses</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'course_detail' course.id %}">{{ course.name }}</a></li>
+                <li class="breadcrumb-item active">Sessions</li>
+            </ol>
+        </nav>
+        
+        <h1 class="mb-4">Sessions for {{ course.name }}</h1>
+        
+        {% if active_sessions %}
+            <h3 class="mt-4">Active Sessions</h3>
+            <div class="row">
+                {% for session in active_sessions %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 border-success">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">{{ session.title }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Date:</strong> {{ session.date|date:"F j, Y" }}</p>
+                                <p><strong>Time:</strong> {{ session.start_time|time:"g:i A" }} - {{ session.end_time|time:"g:i A" }}</p>
+                                {% if session.description %}
+                                    <p>{{ session.description|truncatechars:100 }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer">
+                                <a href="{% url 'session_detail' course.id session.id %}" class="btn btn-success btn-sm">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% if upcoming_sessions %}
+            <h3 class="mt-4">Upcoming Sessions</h3>
+            <div class="row">
+                {% for session in upcoming_sessions %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">{{ session.title }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Date:</strong> {{ session.date|date:"F j, Y" }}</p>
+                                <p><strong>Time:</strong> {{ session.start_time|time:"g:i A" }} - {{ session.end_time|time:"g:i A" }}</p>
+                                {% if session.description %}
+                                    <p>{{ session.description|truncatechars:100 }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer">
+                                <a href="{% url 'session_detail' course.id session.id %}" class="btn btn-primary btn-sm">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% if past_sessions %}
+            <h3 class="mt-4">Past Sessions</h3>
+            <div class="row">
+                {% for session in past_sessions %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 border-secondary">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">{{ session.title }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Date:</strong> {{ session.date|date:"F j, Y" }}</p>
+                                <p><strong>Time:</strong> {{ session.start_time|time:"g:i A" }} - {{ session.end_time|time:"g:i A" }}</p>
+                                {% if session.description %}
+                                    <p>{{ session.description|truncatechars:100 }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer">
+                                <a href="{% url 'session_detail' course.id session.id %}" class="btn btn-secondary btn-sm">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% if not active_sessions and not upcoming_sessions and not past_sessions %}
+            <div class="alert alert-info">
+                <p>No sessions have been created for this course yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

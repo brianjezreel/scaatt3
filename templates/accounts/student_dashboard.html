@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Dashboard - QR Attendance{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4">Student Dashboard</h1>
+        <p>Welcome, {{ user.get_full_name }}!</p>
+        
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">My Courses</h5>
+                        <p class="card-text">View your enrolled courses.</p>
+                        <a href="{% url 'course_list' %}" class="btn btn-success">View Courses</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Attendance History</h5>
+                        <p class="card-text">View your attendance records.</p>
+                        <a href="#" class="btn btn-success">View Attendance</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Scan QR Code</h5>
+                        <p class="card-text">Scan a QR code to mark attendance.</p>
+                        <a href="{% url 'scanner' %}" class="btn btn-success">Scan QR Code</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

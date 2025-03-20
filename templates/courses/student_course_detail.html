@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ course.name }} - QR Attendance{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'course_list' %}">My Courses</a></li>
+                <li class="breadcrumb-item active">{{ course.name }}</li>
+            </ol>
+        </nav>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">{{ course.name }}</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5>Course Details</h5>
+                        <p><strong>Teacher:</strong> {{ course.teacher.get_full_name }}</p>
+                        <p><strong>Enrolled Since:</strong> {{ enrollment.enrollment_date|date:"F j, Y" }}</p>
+                        
+                        {% if course.description %}
+                            <h5 class="mt-4">Description</h5>
+                            <p>{{ course.description }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">My Attendance</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Total Sessions:</strong> 0</p>
+                                <p><strong>Sessions Attended:</strong> 0</p>
+                                <p><strong>Attendance Rate:</strong> N/A</p>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 mt-3">
+                            <a href="#" class="btn btn-success">Scan QR Code</a>
+                            <a href="{% url 'leave_course' course.id %}" class="btn btn-outline-danger">Leave Course</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <h5 class="mt-4">Recent Sessions</h5>
+                <div class="alert alert-info">
+                    No sessions have been created for this course yet.
+                </div>
+                
+                <h5 class="mt-4">My Attendance History</h5>
+                <div class="alert alert-info">
+                    No attendance records found for this course.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

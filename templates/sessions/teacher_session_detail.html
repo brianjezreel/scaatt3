@@ -1,0 +1,342 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ session.title }} - QR Attendance{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'course_list' %}">My Courses</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'course_detail' course.id %}">{{ course.name }}</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'session_list' course.id %}">Sessions</a></li>
+                <li class="breadcrumb-item active">{{ session.title }}</li>
+            </ol>
+        </nav>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ session.title }}</h4>
+                    <div>
+                        <a href="{% url 'edit_session' course.id session.id %}" class="btn btn-light btn-sm">Edit Session</a>
+                        <a href="{% url 'delete_session' course.id session.id %}" class="btn btn-outline-light btn-sm">Delete</a>
+                        {% if not session.is_closed %}
+                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#closeSessionModal">
+                            Close Session
+                        </button>
+                        {% else %}
+                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#reopenSessionModal">
+                            Reopen Session
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5>Session Details</h5>
+                        <p><strong>Date:</strong> {{ session.date|date:"F j, Y" }}</p>
+                        <p><strong>Time:</strong> {{ session.start_time|time:"g:i A" }} - {{ session.end_time|time:"g:i A" }}</p>
+                        <p><strong>Status:</strong> 
+                            {% if session.is_closed %}
+                                <span class="badge bg-danger">Closed</span>
+                            {% elif session.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% elif session.is_upcoming %}
+                                <span class="badge bg-primary">Upcoming</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Past</span>
+                            {% endif %}
+                        </p>
+                        
+                        {% if session.description %}
+                            <h5 class="mt-4">Description</h5>
+                            <p>{{ session.description }}</p>
+                        {% endif %}
+                        
+                        <h5 class="mt-4">Attendance Statistics</h5>
+                        <p><strong>Students Present:</strong> {{ session.get_attendance_count }} / {{ session.get_enrolled_count }}</p>
+                        <p><strong>Attendance Rate:</strong> {{ session.get_attendance_percentage|floatformat:0 }}%</p>
+                        
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">QR Code</h5>
+                            </div>
+                            <div class="card-body text-center" id="qr-code-section" data-session-closed="{% if session.is_closed %}true{% else %}false{% endif %}">
+                                {% if session.is_closed %}
+                                    <div class="alert alert-danger">
+                                        <i class="bi bi-lock-fill"></i>
+                                        <p class="mb-0">This session is closed.</p>
+                                        <p class="mb-0">No further attendance can be marked.</p>
+                                    </div>
+                                {% else %}
+                                    {% if session.qr_is_valid %}
+                                        <div class="mb-3">
+                                            <img src="{{ qr_image }}" alt="QR Code" class="img-fluid" id="qr-code-image">
+                                        </div>
+                                        <div class="mb-3">
+                                            <p class="mb-0">QR Code refreshes in: <span id="countdown-timer">10</span> seconds</p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <a href="{% url 'qr_code_display' course.id session.id %}" class="btn btn-primary" target="_blank">
+                                                <i class="bi bi-fullscreen"></i> Full Screen QR
+                                            </a>
+                                            <button type="button" class="btn btn-outline-primary" id="manual-refresh-btn">
+                                                <i class="bi bi-arrow-clockwise"></i> Refresh Now
+                                            </button>
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-warning">
+                                            <i class="bi bi-exclamation-triangle-fill"></i>
+                                            <p class="mb-0">QR Code has expired.</p>
+                                            <p class="mb-0">Click the button below to generate a new one.</p>
+                                        </div>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#refreshQRModal">
+                                            <i class="bi bi-qr-code"></i> Generate New QR Code
+                                        </button>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h5 class="mt-4">Attendance Records</h5>
+                {% if attendances %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Check-in Time</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attendance in attendances %}
+                                    <tr>
+                                        <td>{{ attendance.student.get_full_name }}</td>
+                                        <td>{{ attendance.check_in_time|date:"F j, Y" }} at {{ attendance.check_in_time|time:"g:i A" }}</td>
+                                        <td>
+                                            <span class="badge bg-success">{{ attendance.get_status_display }}</span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'delete_attendance' course.id session.id attendance.id %}" class="btn btn-sm btn-outline-danger">Remove</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <a href="{% url 'session_attendance' course.id session.id %}" class="btn btn-primary">Manage Attendance</a>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        No students have marked attendance for this session yet.
+                        <a href="{% url 'session_attendance' course.id session.id %}" class="btn btn-primary btn-sm mt-2">Manage Attendance</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QR Code Refresh Modal -->
+<div class="modal fade" id="refreshQRModal" tabindex="-1" aria-labelledby="refreshQRModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="refreshQRModalLabel">Refresh QR Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'refresh_qr_code' course.id session.id %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <p>This will generate a new QR code and invalidate the current one.</p>
+                    
+                    {% for field in qr_refresh_form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                            {{ field.errors }}
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Refresh QR Code</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Close Session Modal -->
+<div class="modal fade" id="closeSessionModal" tabindex="-1" aria-labelledby="closeSessionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="closeSessionModalLabel">Close Session</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'close_session' course.id session.id %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill"></i> <strong>Warning:</strong> This action cannot be undone.
+                    </div>
+                    <p>Closing this session will:</p>
+                    <ul>
+                        <li>Prevent any further attendance marking</li>
+                        <li>Invalidate the current QR code</li>
+                        <li>Mark the session as closed, even if it's still within the scheduled time</li>
+                    </ul>
+                    <p>Are you sure you want to close this session?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Close Session</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reopen Session Modal -->
+<div class="modal fade" id="reopenSessionModal" tabindex="-1" aria-labelledby="reopenSessionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="reopenSessionModalLabel">Reopen Session</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'reopen_session' course.id session.id %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill"></i> <strong>Info:</strong> Reopening this session will allow students to mark attendance again.
+                    </div>
+                    <p>Reopening this session will:</p>
+                    <ul>
+                        <li>Allow students to mark attendance again</li>
+                        <li>Generate a new QR code</li>
+                        <li>Mark the session as active, if it's still within the scheduled time</li>
+                    </ul>
+                    <p>Are you sure you want to reopen this session?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Reopen Session</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add this inside the QR code card -->
+<div class="mt-3">
+    <p><strong>Manual Attendance Code:</strong></p>
+    <div class="input-group">
+        <input type="text" class="form-control" value="{{ session.attendance_code }}" id="attendance-code" readonly>
+        <button class="btn btn-outline-secondary" type="button" onclick="copyAttendanceCode()">Copy</button>
+    </div>
+    <small class="text-muted">Share this code with students who can't scan the QR code.</small>
+</div>
+
+<!-- Add this script at the end of the template -->
+<script>
+function copyAttendanceCode() {
+    var codeInput = document.getElementById("attendance-code");
+    codeInput.select();
+    document.execCommand("copy");
+    alert("Attendance code copied to clipboard!");
+}
+
+// QR Code Auto-refresh functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const countdownTimer = document.getElementById('countdown-timer');
+    const qrCodeImage = document.getElementById('qr-code-image');
+    const manualRefreshBtn = document.getElementById('manual-refresh-btn');
+    const qrCodeSection = document.getElementById('qr-code-section');
+    
+    let timeLeft = 10; // 10 seconds
+    let refreshInterval;
+    
+    // Check if session is closed
+    if (qrCodeSection && qrCodeSection.dataset.sessionClosed === 'true') {
+        // Don't start the countdown if session is closed
+        return;
+    }
+    
+    // Function to refresh QR code via AJAX
+    function refreshQRCode() {
+        fetch('{% url "refresh_qr_code" course.id session.id %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'duration=10'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (qrCodeImage) {
+                    qrCodeImage.src = data.qr_image;
+                }
+                timeLeft = 10;
+                startCountdown();
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing QR code:', error);
+        });
+    }
+    
+    // Function to start countdown
+    function startCountdown() {
+        // Clear any existing interval
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+        }
+        
+        // Update countdown every second
+        refreshInterval = setInterval(function() {
+            timeLeft--;
+            
+            if (countdownTimer) {
+                countdownTimer.textContent = timeLeft;
+            }
+            
+            if (timeLeft <= 0) {
+                clearInterval(refreshInterval);
+                refreshQRCode();
+            }
+        }, 1000);
+    }
+    
+    // Start countdown when page loads
+    if (countdownTimer && qrCodeImage) {
+        startCountdown();
+    }
+    
+    // Manual refresh button
+    if (manualRefreshBtn) {
+        manualRefreshBtn.addEventListener('click', function() {
+            refreshQRCode();
+        });
+    }
+});
+</script>
+{% endblock %} 

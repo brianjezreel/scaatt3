@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}All Sessions - SCA'ATT{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'course_list' %}">My Courses</a></li>
+                <li class="breadcrumb-item active">All Sessions</li>
+            </ol>
+        </nav>
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>All Sessions</h1>
+        </div>
+        
+        {% if active_sessions %}
+            <h3 class="mt-4">Active Sessions</h3>
+            <div class="row">
+                {% for session in active_sessions %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 border-success">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">{{ session.title }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Course:</strong> {{ session.course.name }}</p>
+                                <p><strong>Date:</strong> {{ session.date|date:"F j, Y" }}</p>
+                                <p><strong>Time:</strong> {{ session.start_time|time:"g:i A" }} - {{ session.end_time|time:"g:i A" }}</p>
+                                <p><strong>Status:</strong> 
+                                    {% if session.is_closed %}
+                                        <span class="badge bg-danger">Closed</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="card-footer">
+                                <a href="{% url 'session_detail' session.course.id session.id %}" class="btn btn-primary btn-sm">View Details</a>
+                                <a href="{% url 'qr_code_display' session.course.id session.id %}" class="btn btn-success btn-sm">Show QR Code</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% if upcoming_sessions %}
+            <h3 class="mt-4">Upcoming Sessions</h3>
+            <div class="row">
+                {% for session in upcoming_sessions %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">{{ session.title }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Course:</strong> {{ session.course.name }}</p>
+                                <p><strong>Date:</strong> {{ session.date|date:"F j, Y" }}</p>
+                                <p><strong>Time:</strong> {{ session.start_time|time:"g:i A" }} - {{ session.end_time|time:"g:i A" }}</p>
+                                <p><strong>Status:</strong> 
+                                    {% if session.is_closed %}
+                                        <span class="badge bg-danger">Closed</span>
+                                    {% else %}
+                                        <span class="badge bg-primary">Upcoming</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="card-footer">
+                                <a href="{% url 'session_detail' session.course.id session.id %}" class="btn btn-primary btn-sm">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% if past_sessions %}
+            <h3 class="mt-4">Past Sessions</h3>
+            <div class="row">
+                {% for session in past_sessions %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 border-secondary">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">{{ session.title }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Course:</strong> {{ session.course.name }}</p>
+                                <p><strong>Date:</strong> {{ session.date|date:"F j, Y" }}</p>
+                                <p><strong>Time:</strong> {{ session.start_time|time:"g:i A" }} - {{ session.end_time|time:"g:i A" }}</p>
+                                <p><strong>Status:</strong> 
+                                    {% if session.is_closed %}
+                                        <span class="badge bg-danger">Closed</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Past</span>
+                                    {% endif %}
+                                </p>
+                                <p><strong>Attendance:</strong> {{ session.get_attendance_count }} / {{ session.get_enrolled_count }}</p>
+                            </div>
+                            <div class="card-footer">
+                                <a href="{% url 'session_detail' session.course.id session.id %}" class="btn btn-secondary btn-sm">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% if not active_sessions and not upcoming_sessions and not past_sessions %}
+            <div class="alert alert-info">
+                <p>You haven't created any sessions yet.</p>
+                <a href="{% url 'course_list' %}" class="btn btn-primary">Go to Courses</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

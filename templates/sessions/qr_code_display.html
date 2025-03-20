@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}QR Code - {{ session.title }} - QR Attendance{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+    .qr-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 80vh;
+    }
+    .qr-code {
+        max-width: 500px;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    .qr-info {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    #countdown-display {
+        font-size: 3rem;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+    .countdown-container {
+        background-color: rgba(0, 0, 0, 0.05);
+        padding: 10px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .session-closed {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .session-closed i {
+        font-size: 3rem;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="qr-container">
+    <div class="qr-info">
+        <h2>{{ course.name }}</h2>
+        <h3>{{ session.title }}</h3>
+        <p>{{ session.date|date:"F j, Y" }} | {{ session.start_time|time:"g:i A" }} - {{ session.end_time|time:"g:i A" }}</p>
+        {% if not session.is_closed %}
+        <p>Scan this QR code to mark your attendance</p>
+        {% endif %}
+    </div>
+    
+    {% if session.is_closed %}
+    <div class="session-closed">
+        <i class="bi bi-lock-fill"></i>
+        <h3>Session Closed</h3>
+        <p>This session has been closed by the teacher.</p>
+        <p>No further attendance can be marked.</p>
+    </div>
+    {% else %}
+    <div class="countdown-container text-center" id="qr-code-section" data-session-closed="{% if session.is_closed %}true{% else %}false{% endif %}">
+        <p class="mb-0">QR Code refreshes in:</p>
+        <div id="countdown-display">10</div>
+        <p class="mb-0">seconds</p>
+    </div>
+    
+    <img src="{{ qr_image }}" alt="QR Code" class="qr-code img-fluid" id="qr-code-image">
+    
+    <div class="qr-info">
+        <p>Valid until: {{ session.qr_expiry_time|date:"F j, Y" }} at {{ session.qr_expiry_time|time:"g:i A" }}</p>
+        <button id="generate-qr-button" class="btn btn-success">Generate New QR Code</button>
+    </div>
+    {% endif %}
+    
+    <div class="qr-info">
+        <a href="{% url 'session_detail' course.id session.id %}" class="btn btn-primary">Back to Session</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %} 

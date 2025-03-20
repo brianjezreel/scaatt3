@@ -1,0 +1,1 @@
+web: python manage.py collectstatic --noinput ; python manage.py migrate ; python manage.py create_superuser ; gunicorn config.wsgi # type: ignore

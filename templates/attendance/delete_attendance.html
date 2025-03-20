@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Attendance Record - QR Attendance{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'course_list' %}">My Courses</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'course_detail' course.id %}">{{ course.name }}</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'session_list' course.id %}">Sessions</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'session_detail' course.id session.id %}">{{ session.title }}</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'session_attendance' course.id session.id %}">Manage Attendance</a></li>
+                <li class="breadcrumb-item active">Delete Record</li>
+            </ol>
+        </nav>
+        
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">Delete Attendance Record</h4>
+            </div>
+            <div class="card-body">
+                <p>Are you sure you want to delete the attendance record for <strong>{{ attendance.student.get_full_name }}</strong> from the session <strong>{{ session.title }}</strong>?</p>
+                
+                <div class="alert alert-warning">
+                    <p><strong>Details:</strong></p>
+                    <ul>
+                        <li><strong>Student:</strong> {{ attendance.student.get_full_name }}</li>
+                        <li><strong>Session:</strong> {{ session.title }}</li>
+                        <li><strong>Date:</strong> {{ session.date|date:"F j, Y" }}</li>
+                        <li><strong>Check-in Time:</strong> {{ attendance.check_in_time|date:"F j, Y" }} at {{ attendance.check_in_time|time:"g:i A" }}</li>
+                        <li><strong>Status:</strong> {{ attendance.get_status_display }}</li>
+                    </ul>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'session_attendance' course.id session.id %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-danger">Delete Record</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

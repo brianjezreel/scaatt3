@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Attendance - {{ session.title }} - QR Attendance{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'course_list' %}">My Courses</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'course_detail' course.id %}">{{ course.name }}</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'session_list' course.id %}">Sessions</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'session_detail' course.id session.id %}">{{ session.title }}</a></li>
+                <li class="breadcrumb-item active">Manage Attendance</li>
+            </ol>
+        </nav>
+        
+        <h1 class="mb-4">Manage Attendance for {{ session.title }}</h1>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Student Attendance</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if students_attendance %}
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Student</th>
+                                            <th>Status</th>
+                                            <th>Check-in Time</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in students_attendance %}
+                                            <tr>
+                                                <td>{{ item.student.get_full_name }}</td>
+                                                <td>
+                                                    {% if item.status == 'PRESENT' %}
+                                                        <span class="badge bg-success">Present</span>
+                                                    {% elif item.status == 'LATE' %}
+                                                        <span class="badge bg-warning text-dark">Late</span>
+                                                    {% elif item.status == 'EXCUSED' %}
+                                                        <span class="badge bg-info">Excused</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">Absent</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if item.attendance %}
+                                                        {{ item.attendance.check_in_time|date:"F j, Y" }} at {{ item.attendance.check_in_time|time:"g:i A" }}
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if item.attendance %}
+                                                        <a href="{% url 'delete_attendance' course.id session.id item.attendance.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <p>No students are enrolled in this course.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Record Attendance</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            {% for field in form %}
+                                <div class="mb-3">
+                                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                    {{ field.errors }}
+                                    {{ field }}
+                                    {% if field.help_text %}
+                                        <div class="form-text">{{ field.help_text }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Record Attendance</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Bulk Update</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'bulk_attendance' course.id session.id %}">
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                <label for="{{ bulk_form.status.id_for_label }}" class="form-label">Status</label>
+                                {{ bulk_form.status.errors }}
+                                {{ bulk_form.status }}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="{{ bulk_form.notes.id_for_label }}" class="form-label">Notes</label>
+                                {{ bulk_form.notes.errors }}
+                                {{ bulk_form.notes }}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Select Students</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="selectAll">
+                                    <label class="form-check-label" for="selectAll">
+                                        Select All
+                                    </label>
+                                </div>
+                                <hr>
+                                <div style="max-height: 200px; overflow-y: auto;">
+                                    {% for choice in bulk_form.students %}
+                                        <div class="form-check">
+                                            {{ choice }}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Update Selected</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Select all checkbox functionality
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const studentCheckboxes = document.querySelectorAll('input[name="students"]');
+        
+        selectAllCheckbox.addEventListener('change', function() {
+            studentCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+        });
+        
+        // Update select all checkbox state based on individual checkboxes
+        function updateSelectAllCheckbox() {
+            const allChecked = Array.from(studentCheckboxes).every(checkbox => checkbox.checked);
+            const someChecked = Array.from(studentCheckboxes).some(checkbox => checkbox.checked);
+            
+            selectAllCheckbox.checked = allChecked;
+            selectAllCheckbox.indeterminate = someChecked && !allChecked;
+        }
+        
+        studentCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectAllCheckbox);
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %} 

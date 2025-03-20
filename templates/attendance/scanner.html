@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% block title %}Scan QR Code - QR Attendance{% endblock %}
+
+{% block extra_css %}
+<style>
+    #scanner-container {
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    #qr-video {
+        width: 100%;
+        height: 300px;
+        border: 3px solid #28a745;
+        border-radius: 10px;
+        background-color: #f8f9fa;
+    }
+    .camera-permission-error {
+        padding: 20px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h1 class="mb-4 text-center">Scan QR Code</h1>
+        
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Camera Scanner</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-center">Position the QR code within the scanner area.</p>
+                
+                <div id="scanner-container" class="mb-4">
+                    <div id="qr-reader" style="width: 100%"></div>
+                    <div id="scan-result" class="mt-3"></div>
+                </div>
+                
+                <div class="text-center mb-3">
+                    <button id="start-button" class="btn btn-success">Start Scanner</button>
+                    <button id="stop-button" class="btn btn-danger" style="display: none;">Stop Scanner</button>
+                    <button id="switch-camera" class="btn btn-info" style="display: none;">Switch Camera</button>
+                </div>
+                
+                <div id="permission-instructions" class="alert alert-info mt-4">
+                    <p><strong>Instructions:</strong></p>
+                    <ol>
+                        <li>Click "Start Scanner" to activate your camera</li>
+                        <li>Allow camera access when prompted by your browser</li>
+                        <li>Point your camera at the QR code displayed by your teacher</li>
+                        <li>Hold steady until the code is recognized</li>
+                        <li>You'll be automatically redirected to mark your attendance</li>
+                    </ol>
+                </div>
+                
+                <div id="troubleshooting" class="alert alert-warning mt-3" style="display: none;">
+                    <p><strong>Troubleshooting Camera Access:</strong></p>
+                    <ol>
+                        <li>Make sure your device has a working camera</li>
+                        <li>Check that you've granted camera permission in your browser</li>
+                        <li>Try using a different browser (Chrome or Firefox recommended)</li>
+                        <li>If using a mobile device, try the built-in camera app to scan the QR code</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Manual Entry</h5>
+            </div>
+            <div class="card-body">
+                <p>If the scanner doesn't work, you can manually enter the attendance code:</p>
+                
+                <form method="post" action="{% url 'manual_attendance' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="attendance-code" class="form-label">Attendance Code</label>
+                        <input type="text" class="form-control" id="attendance-code" name="attendance_code" 
+                               placeholder="Enter the code provided by your teacher">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Include the HTML5 QR Code Scanner library -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const startButton = document.getElementById('start-button');
+        const stopButton = document.getElementById('stop-button');
+        const switchCameraButton = document.getElementById('switch-camera');
+        const scanResult = document.getElementById('scan-result');
+        const troubleshooting = document.getElementById('troubleshooting');
+        
+        let html5QrCode;
+        let currentCameraId;
+        let cameras = [];
+        let currentCameraIndex = 0;
+        
+        startButton.addEventListener('click', function() {
+            initScanner();
+        });
+        
+        stopButton.addEventListener('click', function() {
+            stopScanner();
+        });
+        
+        switchCameraButton.addEventListener('click', function() {
+            if (cameras.length > 1) {
+                stopScanner();
+                currentCameraIndex = (currentCameraIndex + 1) % cameras.length;
+                startScanner(cameras[currentCameraIndex].id);
+            }
+        });
+        
+        function initScanner() {
+            // Show troubleshooting info
+            troubleshooting.style.display = 'block';
+            
+            // Create QR code scanner instance
+            html5QrCode = new Html5Qrcode("qr-reader");
+            
+            // Get available cameras
+            Html5Qrcode.getCameras()
+                .then(devices => {
+                    cameras = devices;
+                    console.log("Available cameras:", cameras);
+                    
+                    if (devices && devices.length) {
+                        // Show switch camera button if multiple cameras available
+                        if (devices.length > 1) {
+                            switchCameraButton.style.display = 'inline-block';
+                        }
+                        
+                        // Start scanner with first camera
+                        startScanner(devices[0].id);
+                    } else {
+                        scanResult.innerHTML = `
+                            <div class="alert alert-danger">
+                                <strong>No cameras found!</strong><br>
+                                Please make sure your device has a camera and you've granted permission.
+                            </div>
+                        `;
+                    }
+                })
+                .catch(err => {
+                    console.error("Error getting cameras", err);
+                    scanResult.innerHTML = `
+                        <div class="alert alert-danger">
+                            <strong>Error accessing camera:</strong><br>
+                            ${err}<br><br>
+                            <strong>Possible solutions:</strong>
+                            <ul>
+                                <li>Make sure you're using HTTPS or localhost</li>
+                                <li>Check that your browser supports camera access</li>
+                                <li>Grant camera permission when prompted</li>
+                                <li>Try a different browser (Chrome or Firefox recommended)</li>
+                            </ul>
+                        </div>
+                    `;
+                });
+        }
+        
+        function startScanner(cameraId) {
+            currentCameraId = cameraId;
+            
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            };
+            
+            scanResult.innerHTML = `<div class="alert alert-info">Starting camera...</div>`;
+            
+            html5QrCode.start(
+                cameraId, 
+                config,
+                (decodedText, decodedResult) => {
+                    // On successful scan
+                    console.log(`QR Code detected: ${decodedText}`);
+                    scanResult.innerHTML = `<div class="alert alert-success">QR Code detected! Redirecting...</div>`;
+                    
+                    // Stop scanning
+                    stopScanner();
+                    
+                    // Redirect to the attendance URL
+                    if (decodedText.includes('/attendance/mark/')) {
+                        window.location.href = decodedText;
+                    } else {
+                        scanResult.innerHTML = `<div class="alert alert-danger">Invalid QR code. Please try again.</div>`;
+                        setTimeout(() => {
+                            startScanner(currentCameraId);
+                        }, 2000);
+                    }
+                },
+                (errorMessage) => {
+                    // On error - we'll ignore this as it's usually just frames without QR codes
+                    // console.error(errorMessage);
+                }
+            ).then(() => {
+                console.log(`Scanner started with camera ID: ${cameraId}`);
+                startButton.style.display = 'none';
+                stopButton.style.display = 'inline-block';
+            }).catch(err => {
+                console.error("Error starting scanner:", err);
+                scanResult.innerHTML = `
+                    <div class="alert alert-danger">
+                        <strong>Error starting camera:</strong><br>
+                        ${err}<br><br>
+                        <strong>This could be due to:</strong>
+                        <ul>
+                            <li>Camera permission denied</li>
+                            <li>Camera already in use by another application</li>
+                            <li>Browser doesn't support camera access</li>
+                        </ul>
+                    </div>
+                `;
+            });
+        }
+        
+        function stopScanner() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    console.log('Scanner stopped');
+                    startButton.style.display = 'inline-block';
+                    stopButton.style.display = 'none';
+                }).catch(err => {
+                    console.error('Error stopping scanner:', err);
+                });
+            }
+        }
+    });
+</script>
+{% endblock %} 

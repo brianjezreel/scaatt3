@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Teacher Dashboard - QR Attendance{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4">Teacher Dashboard</h1>
+        <p>Welcome, {{ user.get_full_name }}!</p>
+        
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">My Courses</h5>
+                        <p class="card-text">Manage your courses and sessions.</p>
+                        <a href="{% url 'course_list' %}" class="btn btn-primary">View Courses</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Attendance Records</h5>
+                        <p class="card-text">View and manage attendance records.</p>
+                        <a href="#" class="btn btn-primary">View Attendance</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Generate QR Code</h5>
+                        <p class="card-text">Create a new session with QR code.</p>
+                        <a href="#" class="btn btn-primary">Create Session</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
